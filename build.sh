@@ -17,5 +17,20 @@
 #   http://www.gnu.org/licenses/                                          #
 #                                                                         #
 ###########################################################################
+### globals ###############################################################
 
+# Set paths.
 ROOT=`pwd`
+
+# Set the logfile.
+LOGFILE=$ROOT/build.log
+
+log() {
+    echo $1 | tee -a $LOGFILE
+    return 0
+    }
+
+log "Building BMP2RAW ( this will be ready in a jiffy )..."
+make >> $LOGFILE 2>&1
+
+exit 0
