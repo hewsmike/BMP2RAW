@@ -1,20 +1,18 @@
 /***************************************************************************
- *   Copyright (C) 2008 by Mike Hewson                                     *
+ *   Copyright (C) 2020 by Oliver Bock                                     *
  *   hewsmike[AT]iinet.net.au                                              *
  *                                                                         *
- *   This file is part of Einstein@Home.                                   *
- *                                                                         *
- *   Einstein@Home is free software: you can redistribute it and/or modify *
+ *   BMP2RAW is free software: you can redistribute it and/or modify       *
  *   it under the terms of the GNU General Public License as published     *
  *   by the Free Software Foundation, version 2 of the License.            *
  *                                                                         *
- *   Einstein@Home is distributed in the hope that it will be useful,      *
+ *   BMP2RAW is distributed in the hope that it will be useful,            *
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
  *   GNU General Public License for more details.                          *
  *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with Einstein@Home. If not, see <http://www.gnu.org/licenses/>. *
+ *   A copy of the GNU General Public License is available at              *
+ *   http://www.gnu.org/licenses/                                          *
  *                                                                         *
  ***************************************************************************/
  
@@ -30,6 +28,9 @@ int main(int arg c, char* argv[]) {
     const int SUCCESS(0);
     const int FAILURE(1);
     const int PIXEL_DATA_OFFSET_POS(10);
+    const int IMAGE_WIDTH_POS(18);
+    const int IMAGE_HEIGHT_POS(22);
+    const int IMAGE_ROW_ALIGNMENT(4);
     const int BITS_PER_PIXEL_POS(28);
     const int RGB_SIZE(24);
     const int RGBA_SIZE(32);
@@ -81,7 +82,17 @@ int main(int arg c, char* argv[]) {
     uint32_t pixelDataOffset;
     inFile >> pixelDataOffset;
     
-    // Next get the image width and height in pixels.
+    // Next get the image width in pixels.
+    inFile.seekg(IMAGE_WIDTH_POS, ios::beg);
+    int32_t imageWidth;
+    inFile >> imageWidth;
+    
+    // Calculate the number of padding bytes per row.
+    int paddingBytes = imageWidth % IMAGE_ROW_ALIGNMENT;
+    
+    // Then the image height in pixels.
+    int32_t imageHeight;
+    inFile >> imageHeight;    
     
     // Next we need the number of bits per pixel.
     inFile.seekg(BITS_PER_PIXEL_POS, ios::beg);
@@ -114,11 +125,36 @@ int main(int arg c, char* argv[]) {
     
     // So we now have the input file pointing at the first byte of
     // pixel data and the empty output file ready to write.
+    // Go along the rows.
+    for(int row = 0; row < imageHeight; ++row) {
+        // Go along the pixels. 
+        for(int pixel = 0; pixel < imageWidth; ++pixel) {
+            // Copy the input stream to the output stream, byte by byte.
+            char temp;
+            // Get the red component.
+            inFile >> temp;
+            outFile << temp; 
+            inFile >> temp;
+            outFile << temp;
+            inFile >> temp;
+            outFile << temp;
+            // But discard any alpha values.
+            if(bitsPerPixel == RGBA_SIZE) {
+                char discard;
+                inFile >> discard;
+                }
+            }
+        // Toss away any padding bytes.
+        for(int padding = 0; padding < paddingBytes) {
+            char discard;
+            inFile >> discard;
+            }
+        }
     
     
         
     
-        // Close the input and output files.
+    // Close the input and output files.
     inFile.close();
     outFile.close();
     
