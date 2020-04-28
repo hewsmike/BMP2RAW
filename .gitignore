@@ -1,1 +1,10 @@
 *.cbp
+*.bmp
+*.log
+*.data
+*.zip
+*.jpg
+*.png
+*.gif
+*.layout
+bmp2raw
