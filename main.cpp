@@ -35,14 +35,16 @@ int main(int arg c, char* argv[]) {
     const int RGB_SIZE(24);
     const int RGBA_SIZE(32);
 
-    // argv[0] is this executable file's name.
-
+    std::cout << "BMP2RAW pixel data extractor." << std::endl;
+ 
     // Must have correct number of command line arguments.
     if(argc != 2 ) {
         std::cout << "Must have only two command line parameters!" << std::endl;
+        std::cout << "Usage : bmp2raw inputfilename outputfilename" << std::endl;
         exit(FAILURE);          
         }
         
+    // argv[0] is this executable file's name.
     // The first parameter is the input file name.
     std::string input_file_name(argv[1]);
     std::cout << "Input file name is : " << input_file_name.c_str() << std::endl;
@@ -133,9 +135,11 @@ int main(int arg c, char* argv[]) {
             char temp;
             // Get the red component.
             inFile >> temp;
-            outFile << temp; 
+            outFile << temp;
+            // Get the green component.
             inFile >> temp;
             outFile << temp;
+            // Get the blue component.
             inFile >> temp;
             outFile << temp;
             // But discard any alpha values.
@@ -144,16 +148,13 @@ int main(int arg c, char* argv[]) {
                 inFile >> discard;
                 }
             }
-        // Toss away any padding bytes.
-        for(int padding = 0; padding < paddingBytes) {
+        // Toss away any padding bytes at the end of the row.
+        for(int padding = 0; padding < paddingBytes; ++padding) {
             char discard;
             inFile >> discard;
             }
         }
-    
-    
         
-    
     // Close the input and output files.
     inFile.close();
     outFile.close();
