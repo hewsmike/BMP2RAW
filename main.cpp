@@ -1,0 +1,126 @@
+/***************************************************************************
+ *   Copyright (C) 2008 by Mike Hewson                                     *
+ *   hewsmike[AT]iinet.net.au                                              *
+ *                                                                         *
+ *   This file is part of Einstein@Home.                                   *
+ *                                                                         *
+ *   Einstein@Home is free software: you can redistribute it and/or modify *
+ *   it under the terms of the GNU General Public License as published     *
+ *   by the Free Software Foundation, version 2 of the License.            *
+ *                                                                         *
+ *   Einstein@Home is distributed in the hope that it will be useful,      *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the          *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with Einstein@Home. If not, see <http://www.gnu.org/licenses/>. *
+ *                                                                         *
+ ***************************************************************************/
+ 
+#include <cstdint>
+#include <cstdio>      
+#include <cstdlib>  
+#include <fstream>
+#include <iostream>
+#include <string>
+
+int main(int arg c, char* argv[]) {
+    // Exit conditions.
+    const int SUCCESS(0);
+    const int FAILURE(1);
+    const int PIXEL_DATA_OFFSET_POS(10);
+    const int BITS_PER_PIXEL_POS(28);
+    const int RGB_SIZE(24);
+    const int RGBA_SIZE(32);
+
+    // argv[0] is this executable file's name.
+
+    // Must have correct number of command line arguments.
+    if(argc != 2 ) {
+        std::cout << "Must have only two command line parameters!" << std::endl;
+        exit(FAILURE);          
+        }
+        
+    // The first parameter is the input file name.
+    std::string input_file_name(argv[1]);
+    std::cout << "Input file name is : " << input_file_name.c_str() << std::endl;
+    
+    // The second parameter is the output file name.
+    std::string output_file_name(argv[2]);
+    std::cout << "Output file name is : " << output_file_name.c_str() << std::endl;
+    
+    // Attempt to open the input file for reading
+    // as a binary file using input stream semantics.
+    ifstream inFile;
+    inFile.open(input_file_name, ios::binary);
+    
+    // Check for and handle failure to open.
+    if(!inFile.is_open()) {
+        std::cout << "Failed to open input file !" << std::endl;
+        exit(FAILURE);
+        }
+        
+    // Check for expected filetype ie. 'BM'.
+    char[2] fileType;
+    inFile >> fileType;
+    if((fileType[0] != 'B') || (fileType[1] != 'M')) {
+        std::cout << "Input file not of BMP type !" << std::endl;
+        inFile.close();
+        exit(FAILURE);
+        }
+        
+    // Get the file size.
+    uint32_t fileSize;
+    inFile >> fileSize;
+    std::cout << "Input file size is " << fileSize << " bytes."
+    
+    // Skip reading in the four 'reserved' bytes, as we don't care what they are.
+    // But get the offset to the pixel data.
+    inFile.seekg(PIXEL_DATA_OFFSET_POS, ios::beg);
+    uint32_t pixelDataOffset;
+    inFile >> pixelDataOffset;
+    
+    // Next get the image width and height in pixels.
+    
+    // Next we need the number of bits per pixel.
+    inFile.seekg(BITS_PER_PIXEL_POS, ios::beg);
+    uint16_t bitsPerPixel;
+    inFile >> bitsPerPixel;
+    
+    // Check that we have either 24 bit or 32 bit color depth.
+    if((bitsPerPixel != RGB_SIZE) && (bitsPerPixel != RGBA_SIZE)) {
+        std::cout << "Input file not of RGB nor RGBA format !" << std::endl;
+        inFile.close();
+        exit(FAILURE);
+        }
+    
+    // Move to the offset in the input file, ready to read the pixel data.
+    inFile.seekg(pixelDataOffset, ios::beg); 
+    
+    // Attempt to open the output file for writing
+    // as a binary file using output stream semantics.
+    // We will deliberately truncate the file to zero if
+    // already exists !!
+    ofstream outFile;
+    outFile.open(output_file_name, ios::binary | ios::trunc);
+    
+    // Check for and handle failure to open.
+    if(!outFile.is_open()) {
+        std::cout << "Failed to open output file !" << std::endl;
+        inFile.close();
+        exit(FAILURE);
+        }
+    
+    // So we now have the input file pointing at the first byte of
+    // pixel data and the empty output file ready to write.
+    
+    
+        
+    
+        // Close the input and output files.
+    inFile.close();
+    outFile.close();
+    
+    return SUCCESS;
+    }
