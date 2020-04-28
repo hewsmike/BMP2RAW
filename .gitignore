@@ -6,5 +6,6 @@
 *.jpg
 *.png
 *.gif
+*.res
 *.layout
 bmp2raw

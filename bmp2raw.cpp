@@ -21,6 +21,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <istream>
+#include <ostream>
 #include <string>
 
 union twoBytes {
@@ -44,8 +46,8 @@ int main(int argc, char** argv) {
     const int IMAGE_HEIGHT_POS(22);
     const int IMAGE_ROW_ALIGNMENT(4);
     const int BITS_PER_PIXEL_POS(28);
-    const int RGB_SIZE(24);
-    const int RGBA_SIZE(32);
+    const int RGB_BPP(24);
+    const int RGBA_BPP(32);
 
     std::cout << "BMP2RAW pixel data extractor." << std::endl;
 
@@ -119,14 +121,14 @@ int main(int argc, char** argv) {
     std::cout << "Bits per pixel is " << bitsPerPixel.as_uint << std::endl;
 
     // Check that we have either 24 bit or 32 bit color depth.
-    if((bitsPerPixel.as_uint != RGB_SIZE) && (bitsPerPixel.as_uint != RGBA_SIZE)) {
+    if((bitsPerPixel.as_uint != RGB_BPP) && (bitsPerPixel.as_uint != RGBA_BPP)) {
         std::cout << "Input file not of RGB nor RGBA format !" << std::endl;
         inFile.close();
         exit(FAILURE);
         }
 
     uint paddingBytes = 0;
-    if(bitsPerPixel.as_uint == RGB_SIZE) {
+    if(bitsPerPixel.as_uint == RGB_BPP) {
         // Calculate the number of padding bytes per row.
         paddingBytes = (imageWidth.as_uint * 3) % IMAGE_ROW_ALIGNMENT;
         std::cout << "Padding per pixel row is " << paddingBytes << " bytes." << std::endl;
@@ -156,25 +158,26 @@ int main(int argc, char** argv) {
         for(uint pixel = 0; pixel < imageWidth.as_uint; ++pixel) {
             // Copy the input stream to the output stream, byte by byte.
             // But discard any alpha values.
-            if(bitsPerPixel.as_uint == RGBA_SIZE) {
+            if(bitsPerPixel.as_uint == RGBA_BPP) {
                 char discard;
-                inFile >> discard;
+                inFile.read(&discard, sizeof(discard));
                 }
-            char temp;
+            char temp_red;
+            char temp_green;
+            char temp_blue;
             // Get the red component.
-            inFile >> temp;
-            outFile << temp;
-            // Get the green component.
-            inFile >> temp;
-            outFile << temp;
-            // Get the blue component.
-            inFile >> temp;
-            outFile << temp;
+            inFile.read(&temp_red, sizeof(temp_red));
+            inFile.read(&temp_green, sizeof(temp_green));
+            inFile.read(&temp_blue, sizeof(temp_blue));
+
+            outFile.write(&temp_blue, sizeof(temp_blue));
+            outFile.write(&temp_green, sizeof(temp_green));
+            outFile.write(&temp_red, sizeof(temp_red));
             }
         // Toss away any padding bytes at the end of the row.
         for(uint padding = 0; padding < paddingBytes; ++padding) {
             char discard;
-            inFile >> discard;
+            inFile.read(&discard, 1);
             }
         }
 
