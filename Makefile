@@ -16,9 +16,9 @@
 #                                                                         #
 ###########################################################################
 
-CXX=/usr/bin/g++
+CXX=g++
 
-CPPFLAGS = -std=c++11
+CPPFLAGS = -std=c++11 -Wall
 CPPFLAGS += -I/usr/include -I/usr/lib/x86_64-linux-gnu
 
 LIBS = -Wl,-Bstatic
@@ -28,5 +28,5 @@ LDFLAGS += -static-libstdc++
 
 DEPS=Makefile
 
-bmp2raw: $(DEPS) main.cpp $(OBJS)
-	$(CXX) -g $(CPPFLAGS) $(LDFLAGS) main.cpp -o bmp2raw $(OBJS) $(LIBS)
+bmp2raw: $(DEPS) bmp2raw.cpp
+	$(CXX) -g $(CPPFLAGS) $(LDFLAGS) bmp2raw.cpp -o bmp2raw $(OBJS) $(LIBS)
