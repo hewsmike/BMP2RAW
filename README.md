@@ -20,6 +20,6 @@ The utility will fail if :
 
 The output file will contain a stream of bytes of the format either : 
 
-    RGB repeating ( ie. red, green, blue ) or 
+    BGR repeating ( ie. blue, green, red ) or 
 
-    RGBA repeating ( ie. red, green, blue, alpha )
+    BGRA repeating ( ie. blue, green, red, alpha )
