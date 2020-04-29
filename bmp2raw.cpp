@@ -157,15 +157,17 @@ int main(int argc, char** argv) {
         // Go along the pixels.
         for(uint pixel = 0; pixel < imageWidth.as_uint; ++pixel) {
             // Copy the input stream to the output stream, byte by byte.
-            // But discard any alpha values.
+            // Check for any alpha values.
+            char alpha;
             if(bitsPerPixel.as_uint == RGBA_BPP) {
-                char discard;
-                inFile.read(&discard, sizeof(discard));
+                inFile.read(&alpha, sizeof(alpha));
                 }
+
             char temp_red;
             char temp_green;
             char temp_blue;
-            // Get the red component.
+
+            // Get the color components.
             inFile.read(&temp_red, sizeof(temp_red));
             inFile.read(&temp_green, sizeof(temp_green));
             inFile.read(&temp_blue, sizeof(temp_blue));
@@ -173,6 +175,7 @@ int main(int argc, char** argv) {
             outFile.write(&temp_blue, sizeof(temp_blue));
             outFile.write(&temp_green, sizeof(temp_green));
             outFile.write(&temp_red, sizeof(temp_red));
+            outFile.write(&alpha, sizeof(alpha));
             }
         // Toss away any padding bytes at the end of the row.
         for(uint padding = 0; padding < paddingBytes; ++padding) {
