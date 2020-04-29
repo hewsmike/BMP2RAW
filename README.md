@@ -18,18 +18,8 @@ The utility will fail if :
 
     (d) The number of bits per pixel is neither 24 nor 32.
 
-The output file will contain a stream of bytes of the format : 
-
-    A short header of TEN bytes, followed by either
+The output file will contain a stream of bytes of the format either : 
 
     RGB repeating ( ie. red, green, blue ) or 
 
     RGBA repeating ( ie. red, green, blue, alpha )
-
-The header has the format : 
-
-    4 bytes ( signed integer representing the width of image in pixels )
-
-    4 bytes ( signed integer representing the height of image in pixels )
-
-    2 bytes ( unsigned integer with value either 24 or 32 )
