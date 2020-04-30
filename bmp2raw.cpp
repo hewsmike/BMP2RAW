@@ -80,9 +80,9 @@ int main(int argc, char** argv) {
     inFile.read(&fileType[0], 1);
     inFile.read(&fileType[1], 1);
     if((fileType[0] != 'B') || (fileType[1] != 'M')) {
-        std::cout << "Input file not of BMP type !" << std::endl;
-        inFile.close();
-        exit(FAILURE);
+//        std::cout << "Input file not of BMP type !" << std::endl;
+//        inFile.close();
+//        exit(FAILURE);
         }
     else {
         std::cout << "File type signature is '" << fileType[0]
@@ -161,6 +161,7 @@ int main(int argc, char** argv) {
             char alpha;
             if(bitsPerPixel.as_uint == RGBA_BPP) {
                 inFile.read(&alpha, sizeof(alpha));
+                outFile.write(&alpha, sizeof(alpha));
                 }
 
             char temp_red;
@@ -172,10 +173,9 @@ int main(int argc, char** argv) {
             inFile.read(&temp_green, sizeof(temp_green));
             inFile.read(&temp_blue, sizeof(temp_blue));
 
-            outFile.write(&temp_blue, sizeof(temp_blue));
-            outFile.write(&temp_green, sizeof(temp_green));
             outFile.write(&temp_red, sizeof(temp_red));
-            outFile.write(&alpha, sizeof(alpha));
+            outFile.write(&temp_green, sizeof(temp_green));
+            outFile.write(&temp_blue, sizeof(temp_blue));
             }
         // Toss away any padding bytes at the end of the row.
         for(uint padding = 0; padding < paddingBytes; ++padding) {
