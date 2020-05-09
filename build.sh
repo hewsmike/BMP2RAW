@@ -25,6 +25,9 @@ ROOT=`pwd`
 # Set the logfile.
 LOGFILE=$ROOT/build.log
 
+# Delete any prior build log
+rm -f ./build.log
+
 log() {
     echo $1 | tee -a $LOGFILE
     return 0
