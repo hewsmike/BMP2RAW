@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2020 by Oliver Bock                                     *
+ *   Copyright (C) 2020 by Mike Hewson                                     *
  *   hewsmike[AT]iinet.net.au                                              *
  *                                                                         *
  *   BMP2RAW is free software: you can redistribute it and/or modify       *
@@ -46,6 +46,7 @@ int main(int argc, char** argv) {
     const int IMAGE_HEIGHT_POS(22);
     const int IMAGE_ROW_ALIGNMENT(4);
     const int BITS_PER_PIXEL_POS(28);
+    const int GRAYSCALE_BPP(8);
     const int RGB_BPP(24);
     const int RGBA_BPP(32);
 
@@ -79,15 +80,8 @@ int main(int argc, char** argv) {
     char fileType[2];
     inFile.read(&fileType[0], 1);
     inFile.read(&fileType[1], 1);
-    if((fileType[0] != 'B') || (fileType[1] != 'M')) {
-//        std::cout << "Input file not of BMP type !" << std::endl;
-//        inFile.close();
-//        exit(FAILURE);
-        }
-    else {
-        std::cout << "File type signature is '" << fileType[0]
-                  << fileType[1] << "'" << std::endl;
-        }
+    std::cout << "File type signature is '" << fileType[0]
+              << fileType[1] << "'" << std::endl;
 
     // Get the file size.
     inFile.seekg(FILE_SIZE_POS, std::ios::beg);
@@ -121,7 +115,9 @@ int main(int argc, char** argv) {
     std::cout << "Bits per pixel is " << bitsPerPixel.as_uint << std::endl;
 
     // Check that we have either 24 bit or 32 bit color depth.
-    if((bitsPerPixel.as_uint != RGB_BPP) && (bitsPerPixel.as_uint != RGBA_BPP)) {
+    if((bitsPerPixel.as_uint != RGB_BPP) &&
+       (bitsPerPixel.as_uint != RGBA_BPP) &&
+       (bitsPerPixel.as_uint != GRAYSCALE_BPP)) {
         std::cout << "Input file not of RGB nor RGBA format !" << std::endl;
         inFile.close();
         exit(FAILURE);
@@ -131,8 +127,13 @@ int main(int argc, char** argv) {
     if(bitsPerPixel.as_uint == RGB_BPP) {
         // Calculate the number of padding bytes per row.
         paddingBytes = (imageWidth.as_uint * 3) % IMAGE_ROW_ALIGNMENT;
-        std::cout << "Padding per pixel row is " << paddingBytes << " bytes." << std::endl;
         }
+    else if(bitsPerPixel.as_uint == GRAYSCALE_BPP) {
+        // Calculate the number of padding bytes per row.
+        paddingBytes = imageWidth.as_uint % IMAGE_ROW_ALIGNMENT;
+        }
+
+    std::cout << "Padding per pixel row is " << paddingBytes << " bytes." << std::endl;
 
     // Move to the offset in the input file, ready to read the pixel data.
     inFile.seekg(pixelDataOffset.as_uint, std::ios::beg);
@@ -157,25 +158,34 @@ int main(int argc, char** argv) {
         // Go along the pixels.
         for(uint pixel = 0; pixel < imageWidth.as_uint; ++pixel) {
             // Copy the input stream to the output stream, byte by byte.
-            // Check for any alpha values.
-            char alpha;
-            if(bitsPerPixel.as_uint == RGBA_BPP) {
-                inFile.read(&alpha, sizeof(alpha));
-                outFile.write(&alpha, sizeof(alpha));
+            if(bitsPerPixel.as_uint == GRAYSCALE_BPP){
+                // We're doing single component BMP.
+                char temp_gray;
+                inFile.read(&temp_gray, sizeof(temp_gray));
+                outFile.write(&temp_gray, sizeof(temp_gray));
                 }
+            else {
+                // We're doing three or four component BMP.
+                // Check for any alpha values.
+                char alpha;
+                if(bitsPerPixel.as_uint == RGBA_BPP) {
+                    inFile.read(&alpha, sizeof(alpha));
+                    outFile.write(&alpha, sizeof(alpha));
+                    }
 
-            char temp_red;
-            char temp_green;
-            char temp_blue;
+                char temp_red;
+                char temp_green;
+                char temp_blue;
 
-            // Get the color components.
-            inFile.read(&temp_red, sizeof(temp_red));
-            inFile.read(&temp_green, sizeof(temp_green));
-            inFile.read(&temp_blue, sizeof(temp_blue));
+                // Get the color components.
+                inFile.read(&temp_red, sizeof(temp_red));
+                inFile.read(&temp_green, sizeof(temp_green));
+                inFile.read(&temp_blue, sizeof(temp_blue));
 
-            outFile.write(&temp_red, sizeof(temp_red));
-            outFile.write(&temp_green, sizeof(temp_green));
-            outFile.write(&temp_blue, sizeof(temp_blue));
+                outFile.write(&temp_red, sizeof(temp_red));
+                outFile.write(&temp_green, sizeof(temp_green));
+                outFile.write(&temp_blue, sizeof(temp_blue));
+                }
             }
         // Toss away any padding bytes at the end of the row.
         for(uint padding = 0; padding < paddingBytes; ++padding) {
