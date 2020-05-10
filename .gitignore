@@ -4,8 +4,10 @@
 *.data
 *.zip
 *.jpg
+*.out
 *.png
 *.gif
 *.res
 *.layout
+*.xcf
 bmp2raw
