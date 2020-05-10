@@ -40,76 +40,94 @@ int main(int argc, char** argv) {
     const int SUCCESS(0);
     const int FAILURE(1);
 
-    const int FILE_SIZE_POS(2);
-    const int PIXEL_DATA_OFFSET_POS(10);
-    const int IMAGE_WIDTH_POS(18);
-    const int IMAGE_HEIGHT_POS(22);
-    const int IMAGE_ROW_ALIGNMENT(4);
-    const int BITS_PER_PIXEL_POS(28);
-    const int GRAYSCALE_BPP(8);
-    const int RGB_BPP(24);
-    const int RGBA_BPP(32);
+    const unsigned int FILE_TYPE_SIG_POS(0);
+    const unsigned int FILE_SIZE_POS(2);
+    const unsigned int PIXEL_DATA_OFFSET_POS(10);
+    const unsigned int IMAGE_WIDTH_POS(18);
+    const unsigned int IMAGE_HEIGHT_POS(22);
+    const unsigned int IMAGE_ROW_ALIGNMENT(4);
+    const unsigned int BITS_PER_PIXEL_POS(28);
+    const unsigned int GRAYSCALE_BPP(8);
+    const unsigned int RGB_BPP(24);
+    const unsigned int RGBA_BPP(32);
 
     std::cout << "BMP2RAW pixel data extractor." << std::endl;
 
     // Must have correct number of command line arguments.
     if(argc != 3 ) {
         std::cout << "Must have two command line parameters!" << std::endl;
-        std::cout << "Usage : bmp2raw inputfilename outputfilename" << std::endl;
+        std::cout << "Usage : bmp2raw <inputfilename> <outputfilename>" << std::endl;
         exit(FAILURE);
         }
 
     // argv[0] is this executable file's name.
     // The first parameter is the input file name.
-    std::cout << "Input file name is : " << argv[1] << std::endl;
+    std::string input_file_name(argv[1]);
+    std::cout << "Input file name is '" << input_file_name.c_str()
+              << "'" << std::endl;
 
     // The second parameter is the output file name.
-    std::cout << "Output file name is : " << argv[2] << std::endl;
+    std::string output_file_name(argv[2]);
+    std::cout << "Output file name is '" << output_file_name.c_str()
+              << "'" << std::endl;
 
     // Attempt to open the input file for reading
-    // as a binary file using input stream semantics.
-    std::ifstream inFile(argv[1], std::ios::in | std::ios::binary);
+    // as a binary file.
+    std::ifstream inFile;
+
+    inFile.open(input_file_name, std::ios::binary);
 
     // Check for and handle failure to open.
-    if(inFile.bad()) {
+    if(!inFile) {
         std::cout << "Failed to open input file !" << std::endl;
+        inFile.close();
         exit(FAILURE);
         }
 
     // Check for expected filetype ie. 'BM'.
     char fileType[2];
-    inFile.read(&fileType[0], 1);
-    inFile.read(&fileType[1], 1);
+    inFile.seekg(0, std::ios::beg);
+    inFile.seekg(FILE_TYPE_SIG_POS, inFile.beg);
+    if(!inFile) {
+        std::cout << "Failed to seek to type signature position !" << std::endl;
+        exit(FAILURE);
+        }
+    inFile.read(fileType, sizeof(fileType));
+    // Check for and handle failure to read.
+    if(!inFile) {
+        std::cout << "Failed to read type signature !" << std::endl;
+        exit(FAILURE);
+        }
     std::cout << "File type signature is '" << fileType[0]
               << fileType[1] << "'" << std::endl;
 
     // Get the file size.
-    inFile.seekg(FILE_SIZE_POS, std::ios::beg);
+    inFile.seekg(FILE_SIZE_POS, inFile.beg);
     fourBytes thisFileSize;
-    inFile.read(thisFileSize.as_char, sizeof(fourBytes));
+    inFile.read(thisFileSize.as_char, sizeof(thisFileSize));
     std::cout << "Input file size is " << thisFileSize.as_uint << " bytes." << std::endl;
 
     // Skip reading in the four 'reserved' bytes, as we don't care what they are.
     // But get the offset to the pixel data.
-    inFile.seekg(PIXEL_DATA_OFFSET_POS, std::ios::beg);
+    inFile.seekg(PIXEL_DATA_OFFSET_POS, inFile.beg);
     fourBytes pixelDataOffset;
     inFile.read(pixelDataOffset.as_char, sizeof(fourBytes));
     std::cout << "Pixel data offset " << pixelDataOffset.as_uint << " bytes." << std::endl;
 
     // Next get the image width in pixels.
-    inFile.seekg(IMAGE_WIDTH_POS, std::ios::beg);
+    inFile.seekg(IMAGE_WIDTH_POS, inFile.beg);
     twoBytes imageWidth;
     inFile.read(imageWidth.as_char, sizeof(twoBytes));
     std::cout << "Image width is " << imageWidth.as_uint << " pixels." << std::endl;
 
     // Then the image height in pixels.
-    inFile.seekg(IMAGE_HEIGHT_POS, std::ios::beg);
+    inFile.seekg(IMAGE_HEIGHT_POS, inFile.beg);
     twoBytes imageHeight;
     inFile.read(imageHeight.as_char, sizeof(twoBytes));
     std::cout << "Image height is " << imageHeight.as_uint << " pixels." << std::endl;
 
     // Next we need the number of bits per pixel.
-    inFile.seekg(BITS_PER_PIXEL_POS, std::ios::beg);
+    inFile.seekg(BITS_PER_PIXEL_POS, inFile.beg);
     twoBytes bitsPerPixel;
     inFile.read(bitsPerPixel.as_char, sizeof(twoBytes));
     std::cout << "Bits per pixel is " << bitsPerPixel.as_uint << std::endl;
@@ -142,7 +160,7 @@ int main(int argc, char** argv) {
     // as a binary file using output stream semantics.
     // We will deliberately truncate the file to zero if
     // already exists !!
-    std::ofstream outFile(argv[2],  std::ios::out | std::ios::binary | std::ios::trunc);
+    std::ofstream outFile(output_file_name.c_str(),  std::ios::out | std::ios::binary | std::ios::trunc);
 
     // Check for and handle failure to open.
     if(outFile.bad()) {
@@ -170,7 +188,6 @@ int main(int argc, char** argv) {
                 char alpha;
                 if(bitsPerPixel.as_uint == RGBA_BPP) {
                     inFile.read(&alpha, sizeof(alpha));
-                    outFile.write(&alpha, sizeof(alpha));
                     }
 
                 char temp_red;
@@ -185,6 +202,10 @@ int main(int argc, char** argv) {
                 outFile.write(&temp_red, sizeof(temp_red));
                 outFile.write(&temp_green, sizeof(temp_green));
                 outFile.write(&temp_blue, sizeof(temp_blue));
+
+                if(bitsPerPixel.as_uint == RGBA_BPP) {
+                    outFile.write(&alpha, sizeof(alpha));
+                    }
                 }
             }
         // Toss away any padding bytes at the end of the row.
